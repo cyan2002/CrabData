@@ -1,3 +1,86 @@
+Uploading Files into R and Adding appropriate libraries
 ```{R}
+library(ggplot2)
 crabdata <- read.csv("Feeding.csv", h=T)
+master <- read.csv("Master.csv", h=T)
+```
+
+Creating number IDs for each crab based of their IDs so it's easier to loop through with future code. Also I'm adding a total eaten by proportion column, so we have a fair metric to compare by.
+```{R}
+for(i in 1:36){
+  master$num[[i]] <- substr(master$ID[[i]], 3,5)
+}
+
+crabdata$amount.eaten <- crabdata$FoodIn-crabdata$FoodOut
+all <- merge(crabdata, master, by="ID")
+all$proportion.eaten <- (all$amount.eaten / all$WW)
+#Changing date column into a date data type, so that R can read it as a Date.
+all$Date.x = as.Date(all$Date.x, format = "%m/%d/%Y")
+
+#This code will graph each individual
+#for(i in 1:36){
+#  craby <- subset(all, all$num == i)
+#  graph <- ggplot(aes(x = as.factor(Date.x), y = proportion.eaten), data = craby) + geom_point() + ggtitle(craby$ID)
+#  print(graph)
+#}
+```
+
+Graping each individual clearly.
+```{R}
+craby <- subset(all, all$Species.x == "CI")
+ggplot(craby, aes(x = Date.x, y = proportion.eaten, color = ID, group = ID)) +
+  geom_point() +
+  geom_line() + 
+  facet_wrap(~Trial.x)
+
+craby <- subset(all, all$Species.x == "CM")
+ggplot(craby, aes(x = Date.x, y = proportion.eaten, color = ID, group = ID)) +
+  geom_point() +
+  geom_line() + 
+  facet_wrap(~Trial.x)
+
+craby <- subset(all, all$Species.x == "HS")
+ggplot(craby, aes(x = Date.x, y = proportion.eaten, color = ID, group = ID)) +
+  geom_point() +
+  geom_line() + 
+  facet_wrap(~Trial.x)
+```
+
+Graphing everyone and faceting by grid
+```{R}
+holddf <- subset(all, Trial.x == "16")
+ggplot(holddf, aes(x = as.factor(Date.x), y = proportion.eaten, fill=Food)) + geom_boxplot() + facet_grid(Trial.x~Species.x) + ggtitle("16")
+holddf <- subset(all, Trial.x == "20")
+ggplot(holddf, aes(x = as.factor(Date.x), y = proportion.eaten, fill=Food)) + geom_boxplot() + facet_grid(Trial.x~Species.x) + ggtitle("20")
+holddf <- subset(all, Trial.x == "22")
+ggplot(holddf, aes(x = as.factor(Date.x), y = proportion.eaten, fill=Food)) + geom_boxplot() + facet_grid(Trial.x~Species.x) + ggtitle("22")
+holddf <- subset(all, Trial.x == "24")
+ggplot(holddf, aes(x = as.factor(Date.x), y = proportion.eaten, fill=Food)) + geom_boxplot() + facet_grid(Trial.x~Species.x) + ggtitle("24")
+
+ggplot(all, aes(x = as.factor(Date.x), y = proportion.eaten, fill=Food)) + geom_boxplot() + facet_grid(Trial.x~Species.x)
+```
+
+
+
+
+Creating some stats to compare values to - Let's try to remove hemigrapsus outliers
+```{R}
+par(mfrow =  c(2,2))
+full.mod <- glm(proportion.eaten ~ as.factor(Trial.x) + Species.x, data = all, family= gaussian)
+summary(full.mod)
+plot(full.mod)
+hist(full.mod$residuals)
+
+#Removing outliers
+par(mfrow =  c(2,2))
+all <- all[-c(274, 330),]
+full.mod <- glm(proportion.eaten ~ as.factor(Trial.x) + Species.x, data = all, family= gaussian)
+summary(full.mod)
+plot(full.mod)
+hist(full.mod$residuals)
+```
+
+QQ plot does not look good...
+```{R}
+
 ```
